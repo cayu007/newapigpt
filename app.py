@@ -65,6 +65,28 @@ def obtener_nombres():
         nombres.append({"nombre": nombre, "archivo_url": archivo_url})
     return jsonify({"nombres": nombres})
 
+@app.route('/agregarArchivo/<usuario_id>', methods=['POST'])
+def agregar_archivo(usuario_id):
+    file = request.files.get('archivo')
+    if not file:
+        return jsonify({"error": "Archivo es requerido"}), 400
+
+    try:
+        # Subir archivo a Blob Storage
+        blob_name = f"{usuario_id}/{file.filename}"
+        blob_client = blob_container_client.get_blob_client(blob=blob_name)
+        blob_client.upload_blob(file)
+
+        # Actualizar Cosmos DB con la URL del archivo
+        item = container.read_item(item=usuario_id, partition_key=usuario_id)
+        item['archivo_url'] = blob_client.url
+        container.replace_item(item=usuario_id, body=item)
+
+        return jsonify({"mensaje": "Archivo agregado con éxito"})
+    except exceptions.CosmosResourceNotFoundError:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+    except exceptions.CosmosHttpResponseError as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
