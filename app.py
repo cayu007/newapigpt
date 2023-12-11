@@ -1,28 +1,33 @@
 from flask import Flask, request, jsonify
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
-import json
+from azure.cosmos import CosmosClient, PartitionKey, exceptions
 
 app = Flask(__name__)
 
-# Cadena de conexión de Azure Blob Storage
-connect_str = "DefaultEndpointsProtocol=https;AccountName=apigptokok;AccountKey=MKh1TJKpb2oJfP+rsgaHwrqqk9dA75xP1H7yktaGuBd528K/HAXLN1brq9h0ZjsmjmJfdMTZanS7+AStmyuASg==;EndpointSuffix=core.windows.net"
-container_name = "datos"
-blob_service_client = BlobServiceClient.from_connection_string(connect_str)
-container_client = blob_service_client.get_container_client(container_name)
+# Configuración de Azure Cosmos DB
+endpoint = "https://cayu.documents.azure.com:443/"
+key = "hgvaBeJuUTKHvASooOGTcljYtTUbHvMIYosFyPJaoRSQ258k8IuiUTNby4bFxqhk1OdT80kIfBUjACDbyDXbPQ=="
+client = CosmosClient(endpoint, key)
+database_name = 'ToDoList'
+database = client.create_database_if_not_exists(id=database_name)
+container_name = 'Items'
+container = database.create_container_if_not_exists(
+    id=container_name, 
+    partition_key=PartitionKey(path="/nombre"),
+    offer_throughput=400
+)
 
 def leer_datos():
     try:
-        blob_client = container_client.get_blob_client(blob="nombres.json")
-        blob_data = blob_client.download_blob().readall()
-        return json.loads(blob_data)
+        query = "SELECT * FROM c"
+        items = list(container.query_items(query, enable_cross_partition_query=True))
+        return items
     except Exception as e:
         print(e)
-        return {"nombres": []}
+        return []
 
-def guardar_datos(datos):
+def guardar_datos(nombre):
     try:
-        blob_client = container_client.get_blob_client(blob="nombres.json")
-        blob_client.upload_blob(json.dumps(datos), overwrite=True)
+        container.create_item({"id": nombre, "nombre": nombre})
     except Exception as e:
         print(e)
 
@@ -33,16 +38,14 @@ def crear_nombre():
     if not nombre:
         return jsonify({"error": "Nombre es requerido"}), 400
     
-    datos = leer_datos()
-    datos.setdefault('nombres', []).append(nombre)
-    guardar_datos(datos)
-    
+    guardar_datos(nombre)
     return jsonify({"mensaje": "Nombre almacenado con éxito"})
 
 @app.route('/obtenerNombres', methods=['GET'])
 def obtener_nombres():
     datos = leer_datos()
-    return jsonify(datos)
+    nombres = [item['nombre'] for item in datos]
+    return jsonify({"nombres": nombres})
 
 if __name__ == '__main__':
     app.run(debug=True)
