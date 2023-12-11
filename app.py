@@ -1,29 +1,33 @@
 from flask import Flask, request, jsonify
 from azure.cosmos import CosmosClient, PartitionKey, exceptions
-import config
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 
 app = Flask(__name__)
 
-# Configuración de Azure Cosmos DB desde config.py
-HOST = config.settings['host']
-MASTER_KEY = config.settings['master_key']
-DATABASE_ID = config.settings['database_id']
-CONTAINER_ID = config.settings['container_id']
+# Configuración directa de Azure Cosmos DB
+endpoint = "https://cayu.documents.azure.com:443/"
+key = "WJgGNXaeczY5lFKTl0ayEl0YNnkBvzlMLGHSUeqssMCYCvpV3JS6HD62kObSiqwmwBf5UVhXUJdGACDbSH7T2A=="
+database_name = "ToDoList"
+container_name = "Items"
 
 # Crear una instancia del cliente Cosmos
-client = CosmosClient(HOST, {'masterKey': MASTER_KEY})
+client = CosmosClient(endpoint, key)
 
 # Crear una base de datos si no existe
 try:
-    database = client.create_database(DATABASE_ID)
+    database = client.create_database_if_not_exists(id=database_name)
 except exceptions.CosmosResourceExistsError:
-    database = client.get_database_client(DATABASE_ID)
+    database = client.get_database_client(database_name)
 
 # Crear un contenedor si no existe
 try:
-    container = database.create_container(id=CONTAINER_ID, partition_key=PartitionKey(path="/miClaveDeParticion"))
+    container = database.create_container_if_not_exists(
+        id=container_name, 
+        partition_key=PartitionKey(path="/miClaveDeParticion"),
+        offer_throughput=400
+    )
 except exceptions.CosmosResourceExistsError:
-    container = database.get_container_client(CONTAINER_ID)
+    container = database.get_container_client(container_name)
 
 # Funciones para interactuar con Cosmos DB
 def crear_item(item):
@@ -52,28 +56,22 @@ def eliminar_item(id_item, partition_key):
     except exceptions.CosmosHttpResponseError as e:
         print('Error al eliminar el item:', e)
 
-# Ejemplo de uso
-@app.route('/crearItem', methods=['POST'])
+# Rutas de la aplicación Flask
+@app.route('/crearNombre', methods=['POST'])
 def crear_nombre():
     data = request.json
-    crear_item(data)
-    return jsonify({"mensaje": "Item creado con éxito"})
+    nombre = data.get('nombre')
+    if not nombre:
+        return jsonify({"error": "Nombre es requerido"}), 400
+    
+    crear_item({'id': nombre, 'miClaveDeParticion': nombre})
+    return jsonify({"mensaje": "Nombre almacenado con éxito"})
 
-@app.route('/obtenerItems', methods=['GET'])
+@app.route('/obtenerNombres', methods=['GET'])
 def obtener_nombres():
-    items = obtener_items()
-    return jsonify({"items": items})
-
-@app.route('/actualizarItem/<id_item>', methods=['PUT'])
-def actualizar_nombre(id_item):
-    data = request.json
-    actualizar_item(id_item, data)
-    return jsonify({"mensaje": "Item actualizado con éxito"})
-
-@app.route('/eliminarItem/<id_item>', methods=['DELETE'])
-def eliminar_nombre(id_item):
-    eliminar_item(id_item, request.args.get('partition_key'))
-    return jsonify({"mensaje": "Item eliminado con éxito"})
+    datos = obtener_items()
+    nombres = [item['id'] for item in datos]
+    return jsonify({"nombres": nombres})
 
 if __name__ == '__main__':
     app.run(debug=True)
