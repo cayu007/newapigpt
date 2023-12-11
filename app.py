@@ -13,8 +13,8 @@ database_name = "ToDoList"
 container_name = "Items"
 
 # Configuración de Azure Blob Storage
-storage_connection_string = "AccountEndpoint=https://cayu.documents.azure.com:443/;AccountKey=Zhedb71jSLiJW17vKZ6GIrmBBNGdO6GhxqTdqyPLdYNKbLv9vl7nQE7OTEPvAl4G6lyQHvJASOtdACDb7NS0Ug==;"
-blob_container_name = "documentos"
+storage_connection_string = "DefaultEndpointsProtocol=https;AccountName=apigptokok;AccountKey=MKh1TJKpb2oJfP+rsgaHwrqqk9dA75xP1H7yktaGuBd528K/HAXLN1brq9h0ZjsmjmJfdMTZanS7+AStmyuASg==;EndpointSuffix=core.windows.net"
+blob_container_name = "datos"
 
 # Crear una instancia del cliente Cosmos
 cosmos_client = CosmosClient(endpoint, key)
