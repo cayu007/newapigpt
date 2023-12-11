@@ -8,12 +8,12 @@ app = Flask(__name__)
 
 # Configuración de Azure Cosmos DB
 endpoint = "https://cayu.documents.azure.com:443/"
-key = "WJgGNXaeczY5lFKTl0ayEl0YNnkBvzlMLGHSUeqssMCYCvpV3JS6HD62kObSiqwmwBf5UVhXUJdGACDbSH7T2A=="
+key = "Zhedb71jSLiJW17vKZ6GIrmBBNGdO6GhxqTdqyPLdYNKbLv9vl7nQE7OTEPvAl4G6lyQHvJASOtdACDb7NS0Ug=="
 database_name = "ToDoList"
 container_name = "Items"
 
 # Configuración de Azure Blob Storage
-storage_connection_string = "AccountEndpoint=https://cayu.documents.azure.com:443/;AccountKey=WJgGNXaeczY5lFKTl0ayEl0YNnkBvzlMLGHSUeqssMCYCvpV3JS6HD62kObSiqwmwBf5UVhXUJdGACDbSH7T2A==;"
+storage_connection_string = "AccountEndpoint=https://cayu.documents.azure.com:443/;AccountKey=Zhedb71jSLiJW17vKZ6GIrmBBNGdO6GhxqTdqyPLdYNKbLv9vl7nQE7OTEPvAl4G6lyQHvJASOtdACDb7NS0Ug==;"
 blob_container_name = "documentos"
 
 # Crear una instancia del cliente Cosmos
