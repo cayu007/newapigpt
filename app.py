@@ -58,8 +58,13 @@ def crear_nombre():
 @app.route('/obtenerNombres', methods=['GET'])
 def obtener_nombres():
     items = list(container.read_all_items(max_item_count=10))
-    nombres = [{"nombre": item['nombre'], "archivo_url": item.get('archivo_url')} for item in items]
+    nombres = []
+    for item in items:
+        nombre = item.get('nombre') or item.get('miClaveDeParticion') or item['id']
+        archivo_url = item.get('archivo_url', 'No disponible')
+        nombres.append({"nombre": nombre, "archivo_url": archivo_url})
     return jsonify({"nombres": nombres})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
